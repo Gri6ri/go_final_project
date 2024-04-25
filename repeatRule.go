@@ -10,7 +10,7 @@ import (
 
 const dateFormat = "20060102"
 
-func NextDate(now string, date string, repeat string) (string, error) {
+func (s Service) getNextDate(now string, date string, repeat string) (string, error) {
 	parsedNow, err := time.Parse(dateFormat, now)
 	if err != nil {
 		return "", fmt.Errorf("ошибка при парсинге 'now': %w", err)
@@ -48,18 +48,25 @@ func NextDate(now string, date string, repeat string) (string, error) {
 	}
 }
 
-func getNextDateHandler(w http.ResponseWriter, r *http.Request) {
+func (s Service) getNextDateHandler(w http.ResponseWriter, r *http.Request) {
 	now := r.FormValue("now")
 	date := r.FormValue("date")
 	repeat := r.FormValue("repeat")
 
-	nextDate, err := NextDate(now, date, repeat)
+	nextDate, err := s.getNextDate(now, date, repeat)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	_, err = w.Write([]byte(nextDate))
+	s.writeResponse(w, http.StatusOK, []byte(nextDate))
+}
+
+func (s Service) writeResponse(w http.ResponseWriter, status int, body []byte) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(status)
+
+	_, err := w.Write(body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

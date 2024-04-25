@@ -9,23 +9,26 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func scheduler() {
-	// Получаем текущую рабочую директорию
+// Получаем текущую рабочую директорию
+// Создаем путь к файлу scheduler.db в текущей директории
+func getDbfile() string {
+
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Создаем путь к файлу scheduler.db в текущей директории
 	dbFile := filepath.Join(wd, "scheduler.db")
+	return dbFile
+}
 
-	// Проверяем, существует ли файл
-	_, err = os.Stat(dbFile)
+// Проверяем, существует ли файл
+func getDb(dbFile string) (db *sql.DB) {
+	_, err := os.Stat(dbFile)
 	var install bool
 	if err != nil {
 		install = true
 	}
-
 	// Если файл не существует, создаем его
 	if install {
 		file, err := os.Create(dbFile)
@@ -35,9 +38,8 @@ func scheduler() {
 		file.Close()
 		log.Println("Создан файл базы данных scheduler.db")
 	}
-
 	// Открываем соединение с базой данных
-	db, err := sql.Open("sqlite3", dbFile)
+	db, err = sql.Open("sqlite3", dbFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -57,5 +59,5 @@ func scheduler() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	return db
 }
