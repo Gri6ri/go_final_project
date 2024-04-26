@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/go-chi/chi"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -13,10 +12,10 @@ func main() {
 	db := getDb(dbFile)
 	store := NewStore(db)
 	service := NewService(store)
+	http.HandleFunc("/api/nextdate", service.getNextDateHandler)
+	// r := chi.NewRouter()
 
-	r := chi.NewRouter()
-
-	r.Get("/api/nextdate", service.getNextDateHandler)
+	// r.Get("/api/nextdate", service.getNextDateHandler)
 
 	http.Handle("/", http.FileServer(http.Dir("./web")))
 
