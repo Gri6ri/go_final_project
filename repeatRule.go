@@ -48,21 +48,21 @@ func (s Service) getNextDate(now string, date string, repeat string) (string, er
 	}
 }
 
-func (s Service) getNextDateHandler(w http.ResponseWriter, r *http.Request) {
+func (h Handler) getNextDateHandler(w http.ResponseWriter, r *http.Request) {
 	now := r.FormValue("now")
 	date := r.FormValue("date")
 	repeat := r.FormValue("repeat")
 
-	nextDate, err := s.getNextDate(now, date, repeat)
+	nextDate, err := h.service.getNextDate(now, date, repeat)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	s.writeResponse(w, http.StatusOK, []byte(nextDate))
+	h.writeResponse(w, http.StatusOK, []byte(nextDate))
 }
 
-func (s Service) writeResponse(w http.ResponseWriter, status int, body []byte) {
+func (h Handler) writeResponse(w http.ResponseWriter, status int, body []byte) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(status)
 

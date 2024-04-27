@@ -1,6 +1,10 @@
 package main
 
-import "database/sql"
+import (
+	"database/sql"
+	"log"
+	"net/http"
+)
 
 type Task struct {
 	Date    string `json:"date"`
@@ -29,6 +33,16 @@ type Handler struct {
 	service Service
 }
 
-func newHandler(service Service) Handler {
+func NewHandler(service Service) Handler {
 	return Handler{service: service}
+}
+
+type Server struct {
+	httpServer *http.Server
+}
+
+func (s *Server) Run(port string, handler http.Handler) error {
+	s.httpServer = &http.Server{Addr: ":" + port, Handler: handler}
+	log.Printf("Запуск сервера на порте: %s", port)
+	return s.httpServer.ListenAndServe()
 }

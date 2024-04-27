@@ -9,8 +9,11 @@ import (
 
 func main() {
 	dbFile := getDbfile()
+
 	db := getDb(dbFile)
+
 	store := NewStore(db)
+
 	service := NewService(store)
 	http.HandleFunc("/api/nextdate", service.getNextDateHandler)
 	// r := chi.NewRouter()

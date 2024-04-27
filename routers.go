@@ -6,10 +6,10 @@ import (
 	"github.com/go-chi/chi"
 )
 
-func (s Service) InitRouter() *chi.Mux {
+func (h Handler) InitRouter() *chi.Mux {
 	r := chi.NewRouter()
 	r.Handle("/", http.FileServer(http.Dir("./web")))
 
-	r.Get("/api/nextdate", s.getNextDateHandler)
+	r.Get("/api/nextdate", h.getNextDateHandler)
 	return r
 }
