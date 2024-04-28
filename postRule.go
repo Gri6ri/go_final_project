@@ -62,7 +62,7 @@ func (h Handler) postTaskHandler(w http.ResponseWriter, r *http.Request) {
 	if task.Repeat == "" {
 		nextDate = today
 	} else {
-		nextDate, err = h.service.getNextDate(today, task.Date, task.Repeat)
+		nextDate, err = h.store.getNextDate(today, task.Date, task.Repeat)
 		if err != nil {
 			http.Error(w, wrappJsonError(err.Error()), http.StatusBadRequest)
 			return
@@ -73,7 +73,7 @@ func (h Handler) postTaskHandler(w http.ResponseWriter, r *http.Request) {
 		task.Date = nextDate
 	}
 
-	id, err := h.service.store.postTask(task)
+	id, err := h.store.postTask(task)
 	if err != nil {
 		http.Error(w, wrappJsonError(err.Error()), http.StatusInternalServerError)
 		return

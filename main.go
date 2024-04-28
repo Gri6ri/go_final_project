@@ -23,8 +23,7 @@ func main() {
 		createDb(dbFile, db)
 	}
 	store := NewStore(db)
-	service := NewService(store)
-	handler := NewHandler(service)
+	handler := NewHandler(store)
 
 	http.Handle("/", http.FileServer(http.Dir("./web")))
 	r := chi.NewRouter()

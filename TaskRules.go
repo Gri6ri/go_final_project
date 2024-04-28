@@ -52,7 +52,7 @@ func (h Handler) getTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task, err := h.service.store.getTask(id)
+	task, err := h.store.getTask(id)
 	if err != nil {
 		http.Error(w, wrappJsonError(err.Error()), http.StatusInternalServerError)
 		return
@@ -94,7 +94,7 @@ func (h Handler) editTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err = h.service.store.getTask(id); err != nil {
+	if _, err = h.store.getTask(id); err != nil {
 		http.Error(w, wrappJsonError(err.Error()), http.StatusInternalServerError)
 		return
 	}
@@ -117,7 +117,7 @@ func (h Handler) editTaskHandler(w http.ResponseWriter, r *http.Request) {
 	if task.Repeat == "" {
 		nextDate = today
 	} else {
-		nextDate, err = h.service.getNextDate(today, task.Date, task.Repeat)
+		nextDate, err = h.store.getNextDate(today, task.Date, task.Repeat)
 		if err != nil {
 			http.Error(w, wrappJsonError(err.Error()), http.StatusBadRequest)
 			return
@@ -128,7 +128,7 @@ func (h Handler) editTaskHandler(w http.ResponseWriter, r *http.Request) {
 		task.Date = nextDate
 	}
 
-	if err = h.service.store.UpdateTask(task); err != nil {
+	if err = h.store.UpdateTask(task); err != nil {
 		http.Error(w, wrappJsonError(err.Error()), http.StatusInternalServerError)
 		return
 	}
@@ -146,27 +146,27 @@ func (h Handler) postTaskDoneHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task, err := h.service.store.getTask(id)
+	task, err := h.store.getTask(id)
 	if err != nil {
 		http.Error(w, wrappJsonError(err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	if task.Repeat == "" {
-		err = h.service.store.DeleteTask(id)
+		err = h.store.DeleteTask(id)
 		if err != nil {
 			http.Error(w, wrappJsonError(err.Error()), http.StatusInternalServerError)
 			return
 		}
 	} else {
-		nextDate, err := h.service.getNextDate(today, task.Date, task.Repeat)
+		nextDate, err := h.store.getNextDate(today, task.Date, task.Repeat)
 		if err != nil {
 			http.Error(w, wrappJsonError(err.Error()), http.StatusBadRequest)
 			return
 		}
 
 		task.Date = nextDate
-		if err = h.service.store.UpdateTask(task); err != nil {
+		if err = h.store.UpdateTask(task); err != nil {
 			http.Error(w, wrappJsonError(err.Error()), http.StatusInternalServerError)
 			return
 		}
@@ -181,7 +181,7 @@ func (h Handler) DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, wrappJsonError(err.Error()), http.StatusBadRequest)
 		return
 	}
-	err = h.service.store.DeleteTask(id)
+	err = h.store.DeleteTask(id)
 	if err != nil {
 		http.Error(w, wrappJsonError(err.Error()), http.StatusInternalServerError)
 		return

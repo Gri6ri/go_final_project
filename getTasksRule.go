@@ -26,7 +26,7 @@ func (s Store) getAllTasks() ([]Task, error) {
 }
 
 func (h Handler) getAllTasksHandler(w http.ResponseWriter, r *http.Request) {
-	tasks, err := h.service.store.getAllTasks()
+	tasks, err := h.store.getAllTasks()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

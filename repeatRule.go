@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func (s Service) getNextDate(now string, date string, repeat string) (string, error) {
+func (s Store) getNextDate(now string, date string, repeat string) (string, error) {
 	parsedNow, err := time.Parse(dateFormat, now)
 	if err != nil {
 		return "", fmt.Errorf("ошибка при парсинге 'now': %w", err)
@@ -51,21 +51,11 @@ func (h Handler) getNextDateHandler(w http.ResponseWriter, r *http.Request) {
 	date := r.FormValue("date")
 	repeat := r.FormValue("repeat")
 
-	nextDate, err := h.service.getNextDate(now, date, repeat)
+	nextDate, err := h.store.getNextDate(now, date, repeat)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	h.writeResponse(w, http.StatusOK, []byte(nextDate))
-}
-
-func (h Handler) writeResponse(w http.ResponseWriter, status int, body []byte) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(status)
-
-	_, err := w.Write(body)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
 }

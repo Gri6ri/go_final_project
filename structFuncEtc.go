@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"net/http"
 )
 
 const dateFormat = "20060102"
@@ -23,23 +24,25 @@ func NewStore(db *sql.DB) Store {
 	return Store{db: db}
 }
 
-type Service struct {
+type Handler struct {
 	store Store
 }
 
-func NewService(store Store) Service {
-	return Service{store: store}
-}
-
-type Handler struct {
-	service Service
-}
-
-func NewHandler(service Service) Handler {
-	return Handler{service: service}
+func NewHandler(store Store) Handler {
+	return Handler{store: store}
 }
 
 func wrappJsonError(message string) string {
 	s, _ := json.Marshal(map[string]any{"error": message})
 	return string(s)
+}
+
+func (h Handler) writeResponse(w http.ResponseWriter, status int, body []byte) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(status)
+
+	_, err := w.Write(body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
