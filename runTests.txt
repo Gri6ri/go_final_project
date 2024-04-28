@@ -3,3 +3,5 @@ task 1: go test -run ^TestApp$ ./tests
 task 2: go test -run ^TestDB$ ./tests
 task 3: go test -run ^TestNextDate$ ./tests
 task 4: go test -run ^TestAddTask$ ./tests
+task 5: go test -run ^TestTasks$ ./tests
+task 6.1: go test -run ^TestTask$ ./tests
