@@ -23,27 +23,19 @@ func getDbfile() string {
 }
 
 // Проверяем, существует ли файл
-func getDb(dbFile string) (db *sql.DB) {
+func isDbHere(dbFile string) bool {
 	_, err := os.Stat(dbFile)
-	var install bool
-	if err != nil {
-		install = true
-	}
-	// Если файл не существует, создаем его
-	if install {
-		file, err := os.Create(dbFile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		file.Close()
-		log.Println("Создан файл базы данных scheduler.db")
-	}
-	// Открываем соединение с базой данных
-	db, err = sql.Open("sqlite3", dbFile)
+	return err != nil
+}
+
+// Если файл не существует, создаем его
+func createDb(dbFile string, db *sql.DB) {
+	file, err := os.Create(dbFile)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
+	file.Close()
+	log.Println("Создан файл базы данных scheduler.db")
 
 	// Создаем таблицу, если она не существует
 	_, err = db.Exec(`
@@ -59,5 +51,4 @@ func getDb(dbFile string) (db *sql.DB) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return db
 }

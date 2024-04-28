@@ -2,11 +2,13 @@ package main
 
 import (
 	"database/sql"
-	"log"
-	"net/http"
+	"encoding/json"
 )
 
+const dateFormat = "20060102"
+
 type Task struct {
+	Id      string `json:"id"`
 	Date    string `json:"date"`
 	Title   string `json:"title"`
 	Comment string `json:"comment"`
@@ -37,12 +39,7 @@ func NewHandler(service Service) Handler {
 	return Handler{service: service}
 }
 
-type Server struct {
-	httpServer *http.Server
-}
-
-func (s *Server) Run(port string, handler http.Handler) error {
-	s.httpServer = &http.Server{Addr: ":" + port, Handler: handler}
-	log.Printf("Запуск сервера на порте: %s", port)
-	return s.httpServer.ListenAndServe()
+func wrappJsonError(message string) string {
+	s, _ := json.Marshal(map[string]any{"error": message})
+	return string(s)
 }

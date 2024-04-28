@@ -8,8 +8,6 @@ import (
 	"time"
 )
 
-const dateFormat = "20060102"
-
 func (s Service) getNextDate(now string, date string, repeat string) (string, error) {
 	parsedNow, err := time.Parse(dateFormat, now)
 	if err != nil {
