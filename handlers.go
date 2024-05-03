@@ -2,42 +2,129 @@ package main
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
 )
 
-func (s Store) getTask(id int) (Task, error) {
-	task := Task{}
+type Handler struct {
+	store Store
+}
 
-	row := s.db.QueryRow("SELECT id, date, title, comment, repeat FROM scheduler WHERE id = :id", sql.Named("id", id))
+func NewHandler(store Store) Handler {
+	return Handler{store: store}
+}
 
-	err := row.Scan(&task.Id, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+func wrappJsonError(message string) string {
+	s, _ := json.Marshal(map[string]any{"error": message})
+	return string(s)
+}
+
+func (h Handler) writeResponse(w http.ResponseWriter, status int, body []byte) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(status)
+
+	_, err := w.Write(body)
 	if err != nil {
-		return task, err
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (h Handler) getNextDateHandler(w http.ResponseWriter, r *http.Request) {
+	now := r.FormValue("now")
+	date := r.FormValue("date")
+	repeat := r.FormValue("repeat")
+
+	nextDate, err := h.store.getNextDate(now, date, repeat)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
-	return task, nil
+	h.writeResponse(w, http.StatusOK, []byte(nextDate))
 }
 
-func (s Store) UpdateTask(task Task) error {
-	_, err := s.db.Exec("UPDATE scheduler SET date = :date, title = :title, comment = :comment, repeat = :repeat WHERE id = :id",
-		sql.Named("id", task.Id),
-		sql.Named("date", task.Date),
-		sql.Named("title", task.Title),
-		sql.Named("comment", task.Comment),
-		sql.Named("repeat", task.Repeat))
+func (h Handler) postTaskHandler(w http.ResponseWriter, r *http.Request) {
+	var task Task
+	var buf bytes.Buffer
+	today := time.Now().Format(dateFormat)
 
-	return err
+	_, err := buf.ReadFrom(r.Body)
+	if err != nil {
+		http.Error(w, wrappJsonError(err.Error()), http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	if err = json.Unmarshal(buf.Bytes(), &task); err != nil {
+		http.Error(w, wrappJsonError(err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	if task.Title == "" {
+		http.Error(w, wrappJsonError("не задано поле 'Title'"), http.StatusBadRequest)
+		return
+	}
+
+	if task.Date == "" {
+		task.Date = today
+	}
+
+	date, err := time.Parse(dateFormat, task.Date)
+	if err != nil {
+		http.Error(w, wrappJsonError(err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	var nextDate string
+	if task.Repeat == "" {
+		nextDate = today
+	} else {
+		nextDate, err = h.store.getNextDate(today, task.Date, task.Repeat)
+		if err != nil {
+			http.Error(w, wrappJsonError(err.Error()), http.StatusBadRequest)
+			return
+		}
+	}
+
+	if date.Before(time.Now().Truncate(24 * time.Hour)) {
+		task.Date = nextDate
+	}
+
+	id, err := h.store.postTask(task)
+	if err != nil {
+		http.Error(w, wrappJsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	resp, err := json.Marshal(map[string]any{"id": id})
+	if err != nil {
+		http.Error(w, wrappJsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	h.writeResponse(w, http.StatusCreated, resp)
 }
 
-func (s Store) DeleteTask(id int) error {
-	_, err := s.db.Exec("DELETE FROM scheduler WHERE id = :id", sql.Named("id", id))
+func (h Handler) getAllTasksHandler(w http.ResponseWriter, r *http.Request) {
+	tasks, err := h.store.getAllTasks()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if tasks == nil {
+		tasks = make([]Task, 0)
+	}
 
-	return err
+	resp, err := json.Marshal(map[string][]Task{"tasks": tasks})
+	if err != nil {
+		http.Error(w, wrappJsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
+	h.writeResponse(w, http.StatusOK, resp)
 }
+
 func (h Handler) getTaskHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := r.FormValue("id")
 
